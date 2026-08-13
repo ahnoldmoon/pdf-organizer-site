@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — PDF Organizer</title>
+<style>
+  body { max-width: 720px; margin: 0 auto; padding: 40px 20px 80px;
+         font: 16px/1.75 -apple-system, "Segoe UI", sans-serif; color: #1b1f24; }
+  h1 { font-size: 26px; margin-bottom: 4px; }
+  h2 { font-size: 18px; margin-top: 36px; }
+  .date { color: #6b7280; font-size: 14px; margin-top: 0; }
+  .box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 16px 20px; margin: 24px 0; }
+  table { border-collapse: collapse; width: 100%; margin-top: 8px; }
+  th, td { border: 1px solid #e3e6ea; padding: 8px 10px; text-align: left; font-size: 15px; }
+  th { background: #f6f7f9; }
+  code { background: #f1f3f5; padding: 1px 5px; border-radius: 4px; font-size: 14px; }
+  footer { margin-top: 48px; color: #6b7280; font-size: 14px; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #14171a; color: #e8eaed; }
+    .box { background: #052e16; border-color: #14532d; }
+    th { background: #1c2024; } th, td { border-color: #2c3238; }
+    code { background: #22272c; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Privacy Policy</h1>
+<p class="date">PDF Organizer (Chrome extension) · Last updated: 2026-08-13</p>
+
+<div class="box">
+  <strong>Summary:</strong> This extension collects no personal data. The PDF files you open
+  never leave your browser and are never transmitted to anyone, including the developer.
+</div>
+
+<h2>1. How your PDFs are handled</h2>
+<p>
+  PDFs you load are processed <strong>entirely in the memory of your browser tab</strong>.
+  Merging, splitting, deleting, rotating and saving all happen on your own computer.
+  There is no code path that uploads a file or its contents to any server.
+</p>
+<p>
+  Closing the tab discards everything you loaded. The extension does not keep a copy of your
+  PDFs; the only files that persist are the ones you explicitly download by pressing Save.
+</p>
+
+<h2>2. What is stored</h2>
+<p>The following is kept in local browser storage (<code>chrome.storage.local</code>), on your device only:</p>
+<table>
+  <tr><th>Item</th><th>Purpose</th><th>Location</th></tr>
+  <tr><td>Save count for the current month</td><td>Enforce the free-tier limit</td><td>Your device</td></tr>
+  <tr><td>License key</td><td>Unlock unlimited saves</td><td>Your device</td></tr>
+  <tr><td>Editor tab id</td><td>Reuse an already-open editor tab</td><td>Your device</td></tr>
+</table>
+<p>None of this is transmitted anywhere, and all of it is removed when you uninstall the extension.</p>
+
+<h2>3. Permissions requested</h2>
+<table>
+  <tr><th>Permission</th><th>Why</th></tr>
+  <tr><td><code>storage</code></td><td>To store the items listed in section 2 on your device</td></tr>
+</table>
+<p>
+  No host permissions and no browsing-history access are requested. The extension cannot read
+  the web pages you visit.
+</p>
+
+<h2>4. Third parties and tracking</h2>
+<p>
+  No personal data is collected, so none is shared. The extension contains no analytics,
+  advertising, or tracking code of any kind.
+</p>
+
+<h2>5. Children's privacy</h2>
+<p>No data is collected from users of any age.</p>
+
+<h2>6. Changes to this policy</h2>
+<p>
+  Any change will be published on this page with an updated date above. If a future version
+  collects anything additional, it will be disclosed in the extension update notes.
+</p>
+
+<h2>7. Contact</h2>
+<p>Questions: <a href="mailto:nicemunnt@gmail.com">nicemunnt@gmail.com</a></p>
+
+<footer>
+  Note: in builds where online license verification is enabled, the <em>license key string</em> is
+  sent to the verification server only at the moment you press Activate. PDF files and their
+  contents are never sent. If you enable that feature, move this note into sections 2 and 4.
+</footer>
+
+</body>
+</html>

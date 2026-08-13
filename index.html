@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<!--
+  ============================================================================
+  배포 전에 바꿀 곳 두 군데 (Ctrl+F 로 찾으세요)
+    REPLACE_STORE_URL   → 크롬 웹스토어 제품 페이지 주소
+    REPLACE_BUY_URL     → Lemon Squeezy 체크아웃 주소
+  둘 다 아직 없으면 그대로 두세요. 버튼이 "준비 중" 상태로 표시됩니다.
+  ============================================================================
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDF 페이지 정리 도구 — 업로드 없이 브라우저에서 PDF 병합·분할</title>
+<meta name="description" content="PDF 병합, 분할, 페이지 삭제와 회전을 브라우저 안에서. 파일을 서버에 올리지 않는 크롬 확장 프로그램입니다.">
+<meta property="og:title" content="PDF 페이지 정리 도구">
+<meta property="og:description" content="회사 문서를 남의 서버에 올리지 않고 PDF를 정리하세요. 전부 브라우저 안에서 처리됩니다.">
+<meta property="og:image" content="img/01-main.png">
+<meta property="og:type" content="website">
+<link rel="icon" href="img/favicon.png">
+<style>
+  :root {
+    --bg: #ffffff; --bg2: #f6f7f9; --line: #e3e6ea;
+    --text: #14181d; --muted: #5c6672;
+    --accent: #dc2626; --accent-dark: #b91c1c; --ok: #15803d;
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0f1215; --bg2: #171b1f; --line: #2a3036;
+            --text: #e9ecef; --muted: #9aa4ae; }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.7 "Pretendard", -apple-system, "Malgun Gothic", "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 22px; }
+  a { color: inherit; }
+
+  /* ---------- 상단 ---------- */
+  header {
+    position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(10px); border-bottom: 1px solid var(--line);
+  }
+  .nav { display: flex; align-items: center; gap: 14px; height: 60px; }
+  .logo { display: flex; align-items: center; gap: 9px; font-weight: 700; text-decoration: none; }
+  .logo img { width: 26px; height: 26px; border-radius: 6px; }
+  .nav .spacer { flex: 1; }
+  .nav a.link { color: var(--muted); text-decoration: none; font-size: 14.5px; }
+  .nav a.link:hover { color: var(--text); }
+  @media (max-width: 640px) { .nav a.link { display: none; } }
+
+  /* ---------- 버튼 ---------- */
+  .btn {
+    display: inline-block; text-decoration: none; font-weight: 600; font-size: 15px;
+    padding: 12px 22px; border-radius: 10px; border: 1px solid var(--line);
+    color: var(--text); background: var(--bg); transition: .15s;
+  }
+  .btn:hover { background: var(--bg2); }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-dark); }
+  .btn.disabled { opacity: .55; pointer-events: none; }
+  .btn-sm { padding: 8px 15px; font-size: 14px; }
+
+  /* ---------- 히어로 ---------- */
+  .hero { padding: 76px 0 44px; text-align: center; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 600;
+    color: #166534; background: #dcfce7; border: 1px solid #bbf7d0;
+    padding: 5px 14px; border-radius: 999px; margin-bottom: 22px;
+  }
+  @media (prefers-color-scheme: dark) {
+    .pill { color: #86efac; background: #052e16; border-color: #14532d; }
+  }
+  .hero h1 { font-size: clamp(30px, 5.2vw, 50px); line-height: 1.2; margin: 0 0 16px; letter-spacing: -.02em; }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero p.lead { font-size: clamp(16px, 2.2vw, 19px); color: var(--muted); margin: 0 auto 30px; max-width: 620px; }
+  .cta { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .cta .note { width: 100%; color: var(--muted); font-size: 13.5px; margin-top: 12px; }
+
+  .shot {
+    margin: 46px auto 0; border: 1px solid var(--line); border-radius: var(--radius);
+    overflow: hidden; box-shadow: 0 20px 50px rgba(16,24,40,.13);
+  }
+  .shot img { display: block; width: 100%; height: auto; }
+
+  /* ---------- 섹션 ---------- */
+  section { padding: 68px 0; border-top: 1px solid var(--line); }
+  section h2 { font-size: clamp(23px, 3.4vw, 31px); margin: 0 0 12px; letter-spacing: -.015em; }
+  section .sub { color: var(--muted); margin: 0 0 38px; max-width: 640px; }
+
+  /* ---------- 왜 로컬인가 ---------- */
+  .why { background: var(--bg2); }
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 720px) { .compare { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--bg); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 24px 26px;
+  }
+  .card h3 { margin: 0 0 12px; font-size: 17px; display: flex; align-items: center; gap: 8px; }
+  .card ul { margin: 0; padding-left: 20px; color: var(--muted); }
+  .card li { margin-bottom: 7px; }
+  .bad h3 { color: var(--accent); }
+  .good { border-color: color-mix(in srgb, var(--ok) 40%, var(--line)); }
+  .good h3 { color: var(--ok); }
+
+  /* ---------- 기능 ---------- */
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  @media (max-width: 860px) { .features { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .features { grid-template-columns: 1fr; } }
+  .feat { padding: 22px 24px; border: 1px solid var(--line); border-radius: var(--radius); }
+  .feat .ico { font-size: 22px; }
+  .feat h3 { margin: 10px 0 6px; font-size: 16px; }
+  .feat p { margin: 0; color: var(--muted); font-size: 14.5px; }
+
+  /* ---------- 갤러리 ---------- */
+  .gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 720px) { .gallery { grid-template-columns: 1fr; } }
+  figure { margin: 0; }
+  figure img {
+    width: 100%; height: auto; display: block;
+    border: 1px solid var(--line); border-radius: 10px;
+  }
+  figcaption { color: var(--muted); font-size: 14px; margin-top: 9px; }
+
+  /* ---------- 가격 ---------- */
+  .price { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; max-width: 760px; }
+  @media (max-width: 720px) { .price { grid-template-columns: 1fr; } }
+  .plan { border: 1px solid var(--line); border-radius: var(--radius); padding: 28px; }
+  .plan.pro { border-color: var(--accent); position: relative; }
+  .plan .tag {
+    position: absolute; top: -11px; right: 20px; background: var(--accent); color: #fff;
+    font-size: 12px; font-weight: 700; padding: 3px 11px; border-radius: 999px;
+  }
+  .plan h3 { margin: 0 0 4px; font-size: 16px; color: var(--muted); font-weight: 600; }
+  .plan .amount { font-size: 36px; font-weight: 800; letter-spacing: -.02em; }
+  .plan .amount small { font-size: 15px; font-weight: 500; color: var(--muted); }
+  .plan ul { list-style: none; padding: 0; margin: 18px 0 22px; color: var(--muted); font-size: 14.5px; }
+  .plan li { padding-left: 22px; position: relative; margin-bottom: 8px; }
+  .plan li::before { content: "✓"; position: absolute; left: 0; color: var(--ok); font-weight: 700; }
+
+  /* ---------- FAQ ---------- */
+  details {
+    border-bottom: 1px solid var(--line); padding: 16px 0;
+  }
+  details summary {
+    cursor: pointer; font-weight: 600; list-style: none; display: flex;
+    justify-content: space-between; align-items: center; gap: 12px;
+  }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::after { content: "+"; color: var(--muted); font-size: 20px; }
+  details[open] summary::after { content: "−"; }
+  details p { color: var(--muted); margin: 10px 0 0; }
+
+  /* ---------- 푸터 ---------- */
+  footer { border-top: 1px solid var(--line); padding: 38px 0 60px; color: var(--muted); font-size: 14px; }
+  footer .row { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; }
+  footer a { color: var(--muted); }
+  footer .spacer { flex: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="logo" href="#"><img src="img/favicon.png" alt="">PDF 페이지 정리 도구</a>
+    <span class="spacer"></span>
+    <a class="link" href="#features">기능</a>
+    <a class="link" href="#shots">화면</a>
+    <a class="link" href="#price">가격</a>
+    <a class="link" href="#faq">FAQ</a>
+    <a class="btn btn-sm btn-primary disabled" href="REPLACE_STORE_URL">크롬에 추가</a>
+  </div>
+</header>
+
+<div class="wrap hero">
+  <div class="pill">🔒 브라우저 안에서만 처리 · 업로드 없음</div>
+  <h1>회사 문서를 <em>남의 서버에 올리지 않고</em><br>PDF를 정리하세요</h1>
+  <p class="lead">
+    PDF 병합, 분할, 페이지 삭제와 회전. 전부 이 컴퓨터 안에서 끝납니다.
+    인터넷이 끊겨 있어도 동작합니다.
+  </p>
+  <div class="cta">
+    <a class="btn btn-primary disabled" href="REPLACE_STORE_URL">크롬 웹스토어에서 설치</a>
+    <a class="btn" href="#price">가격 보기</a>
+    <div class="note">무료로 월 10회 저장 · 평생 라이선스 $25 (구독 아님)</div>
+  </div>
+
+  <div class="shot">
+    <img src="img/01-main.png" alt="PDF 페이지 정리 도구 편집 화면" width="1280" height="800">
+  </div>
+</div>
+
+<section class="why">
+  <div class="wrap">
+    <h2>온라인 PDF 사이트, 회사 문서로 써도 괜찮으신가요?</h2>
+    <p class="sub">
+      대부분의 무료 PDF 도구는 파일을 자기네 서버로 올려서 처리합니다.
+      계약서, 품의서, 인사 서류를 그렇게 올릴 수 있는 회사는 많지 않습니다.
+    </p>
+    <div class="compare">
+      <div class="card bad">
+        <h3>일반 온라인 PDF 사이트</h3>
+        <ul>
+          <li>파일이 외부 서버로 전송됩니다</li>
+          <li>서버에 언제까지 남는지 확인할 방법이 없습니다</li>
+          <li>사내 보안 규정 위반이 되는 경우가 많습니다</li>
+          <li>인터넷이 느리면 업로드부터 기다려야 합니다</li>
+        </ul>
+      </div>
+      <div class="card good">
+        <h3>PDF 페이지 정리 도구</h3>
+        <ul>
+          <li>네트워크 권한 자체가 없습니다 — 보내고 싶어도 못 보냅니다</li>
+          <li>탭을 닫으면 열어둔 파일은 즉시 사라집니다</li>
+          <li>요구하는 권한은 설정 저장용 <code>storage</code> 하나뿐</li>
+          <li>업로드가 없으니 큰 파일도 기다릴 필요가 없습니다</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <h2>필요한 건 다 있습니다</h2>
+    <p class="sub">페이지를 눈으로 보면서 정리합니다. 몇 쪽이 어디였는지 외울 필요가 없습니다.</p>
+    <div class="features">
+      <div class="feat">
+        <div class="ico">🔗</div><h3>병합</h3>
+        <p>여러 PDF를 올린 순서대로 한 파일로 합칩니다.</p>
+      </div>
+      <div class="feat">
+        <div class="ico">✂️</div><h3>분할</h3>
+        <p>선택한 페이지만, 원본 파일별로, 한 장씩, N장씩 — 네 가지 방식.</p>
+      </div>
+      <div class="feat">
+        <div class="ico">🗑️</div><h3>페이지 삭제·복제</h3>
+        <p>빈 페이지나 잘못 스캔된 장을 골라내고, 필요한 장은 복제합니다.</p>
+      </div>
+      <div class="feat">
+        <div class="ico">🔄</div><h3>회전</h3>
+        <p>90° 단위로, 페이지마다 따로. 거꾸로 스캔된 문서를 바로잡습니다.</p>
+      </div>
+      <div class="feat">
+        <div class="ico">↕️</div><h3>순서 변경</h3>
+        <p>페이지를 끌어다 놓으면 끝. 여러 장을 골라 한꺼번에 옮길 수도 있습니다.</p>
+      </div>
+      <div class="feat">
+        <div class="ico">🧹</div><h3>메타데이터 제거</h3>
+        <p>저장할 때 작성자·제목·생성일을 지웁니다. 외부로 나가는 문서에 유용합니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="shots" class="why">
+  <div class="wrap">
+    <h2>실제 화면</h2>
+    <p class="sub">설치하면 바로 이 화면입니다.</p>
+    <div class="gallery">
+      <figure>
+        <img src="img/02-rotate.png" alt="여러 페이지를 선택해 한 번에 회전한 화면" loading="lazy">
+        <figcaption>여러 장을 골라 한 번에 회전. 각 페이지에 회전각이 표시됩니다.</figcaption>
+      </figure>
+      <figure>
+        <img src="img/03-save.png" alt="다섯 가지 저장 방식 메뉴" loading="lazy">
+        <figcaption>저장 방식 다섯 가지. 메타데이터 제거는 기본으로 켜져 있습니다.</figcaption>
+      </figure>
+      <figure>
+        <img src="img/04-range.png" alt="1-4,9,11 같은 범위 입력으로 페이지를 선택한 화면" loading="lazy">
+        <figcaption><code>1-4,9,11</code> 처럼 적으면 그 페이지들만 한 번에 선택됩니다.</figcaption>
+      </figure>
+      <figure>
+        <img src="img/05-empty.png" alt="PDF를 끌어다 놓는 시작 화면" loading="lazy">
+        <figcaption>파일을 끌어다 놓기만 하면 시작. 여러 개를 한꺼번에 올려도 됩니다.</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section id="price">
+  <div class="wrap">
+    <h2>가격</h2>
+    <p class="sub">구독이 아닙니다. 한 번 사면 끝입니다.</p>
+    <div class="price">
+      <div class="plan">
+        <h3>무료</h3>
+        <div class="amount">₩0</div>
+        <ul>
+          <li>모든 기능 사용 가능</li>
+          <li>한 달에 10회까지 저장</li>
+          <li>페이지 수 제한 없음</li>
+          <li>워터마크 없음</li>
+        </ul>
+        <a class="btn disabled" href="REPLACE_STORE_URL">먼저 써보기</a>
+      </div>
+      <div class="plan pro">
+        <span class="tag">평생</span>
+        <h3>라이선스</h3>
+        <div class="amount">$25 <small>1회 결제</small></div>
+        <ul>
+          <li>저장 횟수 무제한</li>
+          <li>평생 사용 · 추가 비용 없음</li>
+          <li>업데이트 무료</li>
+          <li>이메일로 키 즉시 발송</li>
+        </ul>
+        <a class="btn btn-primary disabled" href="REPLACE_BUY_URL">라이선스 구입</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="faq" class="why">
+  <div class="wrap">
+    <h2>자주 묻는 질문</h2>
+    <p class="sub">더 궁금한 점은 메일로 물어보세요. 보통 하루 안에 답장합니다.</p>
+
+    <details open>
+      <summary>정말 파일이 서버로 안 가나요?</summary>
+      <p>
+        네. 이 확장 프로그램은 웹사이트 접근 권한(host permissions)을 아예 요청하지 않습니다.
+        구조적으로 외부에 데이터를 보낼 수 없습니다. 크롬 설치 화면에서 요구 권한이
+        "저장 공간" 하나뿐인 것으로 직접 확인하실 수 있습니다.
+      </p>
+    </details>
+    <details>
+      <summary>인터넷 없이도 되나요?</summary>
+      <p>네. 필요한 라이브러리가 전부 확장 프로그램 안에 들어 있어서 오프라인에서 그대로 동작합니다.</p>
+    </details>
+    <details>
+      <summary>암호가 걸린 PDF도 되나요?</summary>
+      <p>
+        열기 암호가 걸린 파일은 지원하지 않습니다. 암호를 해제한 뒤 사용해 주세요.
+        편집 제한(소유자 암호)만 걸린 파일은 열리지만, 결과가 깨질 수 있어 경고를 표시합니다.
+      </p>
+    </details>
+    <details>
+      <summary>파일 크기 제한이 있나요?</summary>
+      <p>
+        정해진 제한은 없습니다. 다만 전부 메모리에서 처리하므로 수백 MB짜리 문서는
+        느려질 수 있습니다. 보통의 사무 문서는 문제없습니다.
+      </p>
+    </details>
+    <details>
+      <summary>라이선스는 몇 대까지 쓸 수 있나요?</summary>
+      <p>개인이 사용하는 기기라면 회사 PC와 집 PC 양쪽에 등록해 쓰실 수 있습니다.</p>
+    </details>
+    <details>
+      <summary>환불되나요?</summary>
+      <p>
+        구입 후 14일 안에 메일 주시면 이유를 묻지 않고 전액 환불해 드립니다.
+        무료 버전으로 충분히 확인해 보신 뒤 구입하시길 권합니다.
+      </p>
+    </details>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap row">
+    <span>© 2026 PDF 페이지 정리 도구</span>
+    <span class="spacer"></span>
+    <a href="privacy.ko.html">개인정보처리방침</a>
+    <a href="privacy.en.html">Privacy (EN)</a>
+    <a href="mailto:nicemunnt@gmail.com">문의</a>
+  </div>
+</footer>
+
+</body>
+</html>
